@@ -249,9 +249,10 @@ function updateReportButtons(){
 function renderReport(period){
  currentReport=period;
  updateReportButtons();
- const expenses=filteredExpenses(period);
+ const r=reportRange(period);
+ const categorized=(r?db.tx.filter(t=>t.type!=='transfer'&&t.date>=r.start&&t.date<=r.end):db.tx.filter(t=>t.type!=='transfer'));
  const all=db.categories.map(name=>{
-   const total=expenses.reduce((s,t)=>s+(t.category===name?(Number(t.amount)||0):0),0);
+   const total=categorized.reduce((s,t)=>s+(t.category===name?(Number(t.amount)||0):0),0);
    return `<div class="categoryRow" data-category="${esc(name)}" onclick="showCategory('${esc(name)}','${esc(period)}')">
     <div><span>📁 ${esc(name)}</span><div class="small">${money(total)}</div></div>
     <div class="categoryMenuWrap" onclick="event.stopPropagation()">
@@ -266,9 +267,12 @@ function renderReport(period){
  $('categories').innerHTML=all||'<div class="small">No categories yet.</div>';
 }
 function showCategory(cat,period){
- let a=filteredExpenses(period).filter(t=>t.category===cat),total=a.reduce((s,t)=>s+Number(t.amount||0),0);
- $('detailTitle').textContent=cat;$('detailContent').innerHTML=`<div class="card" style="margin:0 0 8px;background:#f9fafb"><div class="label">Total Expense</div><div class="balance" style="font-size:25px">${money(total)}</div><div class="small">${a.length} transaction(s)</div></div>`+
- (a.map(t=>`<div class="tx"><div class="row"><div><b>${esc(t.desc||cat)}</b><div class="small">${esc(t.date)} • ${esc(account(t.account)?.name||'')}</div></div><b class="red">-${money(t.amount)}</b></div></div>`).join('')||'<div class="small">No transactions.</div>');
+ const r=reportRange(period);
+ let a=db.tx.filter(t=>t.type!=='transfer'&&t.category===cat);
+ if(r)a=a.filter(t=>t.date>=r.start&&t.date<=r.end);
+ const total=a.reduce((s,t)=>s+Number(t.amount||0),0);
+ $('detailTitle').textContent=cat;$('detailContent').innerHTML=`<div class="card" style="margin:0 0 8px;background:#f9fafb"><div class="label">Total</div><div class="balance" style="font-size:25px">${money(total)}</div><div class="small">${a.length} transaction(s)</div></div>`+
+ (a.map(t=>{const sign=t.type==='income'?'+':'-';const cls=t.type==='income'?'green':'red';return `<div class="tx"><div class="row"><div><b>${esc(t.desc||cat)}</b><div class="small">${esc(t.date)} • ${esc(account(t.account)?.name||'')} • ${t.type==='income'?'Income':'Expense'}</div></div><b class="${cls}">${sign}${money(t.amount)}</b></div></div>`}).join('')||'<div class="small">No transactions.</div>');
  $('detailModal').classList.remove('hidden');$('detailModal').style.display='flex';document.body.style.overflow='hidden';
 }
 function forceCloseModal(e){if(e){e.preventDefault();e.stopPropagation();}const tx=document.getElementById('txModal'),detail=document.getElementById('detailModal');if(tx){tx.classList.add('hidden');tx.style.display='none';}if(detail){detail.classList.add('hidden');detail.style.display='none';}document.body.style.overflow='';document.documentElement.style.overflow='';editingId=null;return false}
@@ -330,12 +334,12 @@ function editCategoryFromList(name){
  const next=prompt('Category name',name); if(next===null)return;
  const v=next.trim(); if(!v)return;
  if(db.categories.some((x,j)=>j!==i&&x.toLowerCase()===v.toLowerCase())){toast('Category already exists');return;}
- db.tx.forEach(t=>{if(t.type==='expense'&&t.category===name)t.category=v});
+ db.tx.forEach(t=>{if(t.type!=='transfer'&&t.category===name)t.category=v});
  db.categories[i]=v; persist(); toast('Category updated');
 }
 function deleteCategoryFromList(name){
  const i=db.categories.indexOf(name); if(i<0)return;
- if(db.tx.some(t=>t.type==='expense'&&t.category===name)){toast('This category is used in an expense');return;}
+ if(db.tx.some(t=>t.type!=='transfer'&&t.category===name)){toast('This category is used in a transaction');return;}
  if(!confirm('Delete category '+name+'?'))return;
  db.categories.splice(i,1); persist(); toast('Category deleted');
 }
