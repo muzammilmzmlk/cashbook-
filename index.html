@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<title>CashBook v28</title>
+<title>CashBook v29</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f4f6;--text:#111827;--mutedText:#6b7280;--card:#fff;--soft:#f9fafb;--soft2:#e5e7eb;--border:#e5e7eb;--input:#fff;--header:#111827;--footer:#fff;--blue:#2563eb;--modal:#fff}
@@ -563,11 +563,15 @@ $('addTransactionBtn').onclick=()=>openTx(null,'expense');
 $('txType').onchange=syncTxForm;
 $('addAccountBtn').onclick=addAccount;$('addCategoryBtn').onclick=addCategory;
 document.querySelectorAll('.reportBtn').forEach(b=>b.onclick=()=>{if(b.dataset.period==='custom'){customReport();return;}$('reportCustomRange').classList.add('hidden');renderReport(b.dataset.period)});$('applyCustomBtn').onclick=applyCustomReport;$('reportApplyCustomBtn').onclick=applyReportCustom;
-$('closeModal').onclick=forceCloseModal;
-$('closeModal').ontouchend=forceCloseModal;
-$('cancelModal').onclick=forceCloseModal;
-$('closeDetail').onclick=forceCloseModal;
-$('closeDetail').ontouchend=forceCloseModal;
+function bindModalClose(id){
+  const el=$(id);
+  if(!el)return;
+  el.addEventListener('pointerup',forceCloseModal,{passive:false});
+  el.addEventListener('click',forceCloseModal);
+}
+bindModalClose('closeModal');
+bindModalClose('cancelModal');
+bindModalClose('closeDetail');
 $('txModal').addEventListener('click',e=>{if(e.target===$('txModal'))closeAnyModal()});$('detailModal').addEventListener('click',e=>{if(e.target===$('detailModal'))closeAnyModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAnyModal()});
 $('saveBtn').onclick=saveTx;$('backupBtn').onclick=backup;$('restoreBtn').onclick=()=>$('restoreInput').click();$('restoreInput').onchange=restoreFile;$('exportBtn').onclick=exportCSV;$('wipeBtn').onclick=wipe;$('themesBtn').onclick=openThemeModal;$('closeThemeModal').onclick=closeThemeModal;$('closeThemeModal').ontouchend=closeThemeModal;document.querySelectorAll('.themeOption').forEach(b=>b.onclick=()=>chooseTheme(b.dataset.theme));$('themeModal').addEventListener('click',e=>{if(e.target===$('themeModal'))closeThemeModal()});
