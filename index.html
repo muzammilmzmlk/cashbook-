@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<title>CashBook v37</title>
+<title>CashBook v38</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f4f6;--text:#111827;--mutedText:#6b7280;--card:#fff;--soft:#f9fafb;--soft2:#e5e7eb;--border:#e5e7eb;--input:#fff;--header:#111827;--footer:#fff;--blue:#2563eb;--modal:#fff}
@@ -248,6 +248,35 @@ main{padding-bottom:92px}
 #reportTab .categorySelectedReport{margin-bottom:12px;border-radius:18px}
 @media(max-width:380px){#reportTab .categoryReportTop{grid-template-columns:minmax(0,1fr) auto 22px}#reportTab .categoryNameLink{font-size:16px}#reportTab .categoryNet strong{font-size:12px}#reportTab .categoryMetric{padding:9px 9px}#reportTab .categoryMetric .metricValue{font-size:12px}}
 </style>
+
+<style id="report-category-v38">
+#reportTab .categoryReportList{display:grid;gap:10px}
+#reportTab .categoryReportItem{border:1px solid var(--border);border-radius:18px;background:var(--card);overflow:hidden;box-shadow:0 2px 9px rgba(0,0,0,.045);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#reportTab .categoryReportItemBody{padding:14px}
+#reportTab .categoryReportTop{display:grid;grid-template-columns:minmax(0,1fr) auto 30px;align-items:center;gap:8px;margin:0}
+#reportTab .categoryNameLink{display:inline-flex;align-items:center;gap:8px;min-width:0;padding:2px 0;background:transparent;color:var(--text);font-size:17px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#reportTab .categoryNameLink .folder{font-size:23px;flex:0 0 auto}
+#reportTab .categoryNameLink .nameText{overflow:hidden;text-overflow:ellipsis}
+#reportTab .categoryNet{text-align:right;line-height:15px}
+#reportTab .categoryNet span{display:block;font-size:10px;font-weight:750;color:var(--mutedText);text-transform:uppercase;letter-spacing:.25px}
+#reportTab .categoryNet strong{display:block;font-size:15px;font-weight:900;white-space:nowrap}
+#reportTab .categoryNet.positive strong{color:#3f9d54}
+#reportTab .categoryNet.negative strong{color:#d13b32}
+#reportTab .categoryReportArrow{width:30px;height:30px;border-radius:10px;background:var(--soft);color:var(--mutedText);display:grid;place-items:center;font-size:22px}
+#reportTab .categoryMetrics{display:none}
+#reportTab .categoryMetric{min-width:0;padding:10px 11px;border-radius:13px;background:var(--soft);border:1px solid var(--border)}
+#reportTab .categoryMetric .metricLabel{font-size:11px;color:var(--mutedText);font-weight:750;margin-bottom:3px}
+#reportTab .categoryMetric .metricValue{font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#reportTab .categoryReportFooter,#reportTab .categorySelectedReport{display:none!important}
+#reportTab .trendHeader .chartSub{display:none}
+#reportTab .trendHeader{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#reportTab .trendHeader .chartTitle{font-size:19px;margin:0}
+#reportTab .trendLegend{display:flex;gap:10px;justify-content:flex-end}
+#reportTab .trendLegend span{display:inline-flex;align-items:center;gap:5px;padding:0;background:transparent;font-size:12px;font-weight:650;color:var(--mutedText)}
+#reportTab .trendLegend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+#reportTab .trendCanvas{border:0;border-radius:0;background:transparent}
+@media(max-width:380px){#reportTab .categoryReportItemBody{padding:13px}#reportTab .categoryNameLink{font-size:16px}#reportTab .categoryNet strong{font-size:13px}#reportTab .trendHeader{display:block}#reportTab .trendLegend{justify-content:flex-start;margin-top:7px}}
+</style>
 </head>
 <body>
 <header><h1>💰 CashBook</h1><div class="sub">Income • Expense • Cash • Bank</div></header>
@@ -292,7 +321,7 @@ main{padding-bottom:92px}
       <div class="stat" style="margin-top:10px"><div class="label">Net Savings</div><div id="reportSavings" class="value">AED 0.00</div></div>
     </div>
     <div class="card categoryReportCard">
-      <div class="categoryReportIntro"><div><div class="sectionTitle">Category Report</div><div class="categoryReportHint">Tap a category to view its report</div></div></div>
+      <div class="categoryReportIntro"><div><div class="sectionTitle">Category Report</div><div class="categoryReportHint">Tap a category to view transactions</div></div></div>
       <div id="categorySelectedReport" class="categorySelectedReport" aria-live="polite"></div>
       <div id="reportCategories" class="categoryReportList"></div>
     </div>
@@ -543,7 +572,7 @@ function renderMonthlyLine(a){
  const incomeDots=keys.map((k,i)=>`<circle class="lineDotIncome" cx="${x(i)}" cy="${y(map[k].income)}" r="5" fill="#16a34a"><title>${esc(monthLabel(k))} Income: ${money(map[k].income)}</title></circle>`).join('');
  const expenseDots=keys.map((k,i)=>`<circle class="lineDotExpense" cx="${x(i)}" cy="${y(map[k].expense)}" r="5" fill="#dc2626"><title>${esc(monthLabel(k))} Expense: ${money(map[k].expense)}</title></circle>`).join('');
  const svg=`<svg class="lineChart" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Monthly income and expense line chart"><defs><linearGradient id="incomeFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#16a34a" stop-opacity=".18"/><stop offset="100%" stop-color="#16a34a" stop-opacity="0"/></linearGradient><linearGradient id="expenseFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#dc2626" stop-opacity=".16"/><stop offset="100%" stop-color="#dc2626" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area('income')}" fill="url(#incomeFill)"></path><path d="${area('expense')}" fill="url(#expenseFill)"></path><path class="linePathIncome" stroke="#16a34a" d="${smoothPath('income')}"></path><path class="linePathExpense" stroke="#dc2626" d="${smoothPath('expense')}"></path>${incomeDots}${expenseDots}${labels}</svg>`;
- wrap.innerHTML=`<div class="trendHeader"><div><div class="chartTitle">Cash Flow Trend</div><div class="chartSub">Monthly income and expense for the selected period.</div></div><div class="trendLegend"><span><i style="background:#16a34a"></i>Income</span><span><i style="background:#dc2626"></i>Expense</span></div></div><div class="trendCanvas"><div class="trendCanvasInner">${svg}</div></div>`;
+ wrap.innerHTML=`<div class="trendHeader"><div><div class="chartTitle">Expense Trend</div><div class="chartSub">Monthly income and expense for the selected period.</div></div><div class="trendLegend"><span><i style="background:#16a34a"></i>Income</span><span><i style="background:#dc2626"></i>Expense</span></div></div><div class="trendCanvas"><div class="trendCanvasInner">${svg}</div></div>`;
 }
 function categoryPeriodLabel(period){
  if(period==='all')return 'All Time';
@@ -581,26 +610,27 @@ function renderSummaryReport(period){
      const exp=a.reduce((sum,t)=>sum+(t.type==='expense'&&t.category===name?Number(t.amount)||0:0),0);
      return {name,income:inc,expense:exp,net:inc-exp};
    }).filter(x=>x.income>0||x.expense>0).sort((x,y)=>(y.income+y.expense)-(x.income+x.expense));
-   $('reportCategories').innerHTML=rows.map(x=>`<div class="categoryReportItem" data-category="${esc(x.name)}" role="button" tabindex="0" aria-label="Open ${esc(x.name)} report"><div class="categoryReportItemBody"><div class="categoryReportTop"><button type="button" class="categoryNameLink" data-category="${esc(x.name)}" aria-label="Show ${esc(x.name)} transactions"><span class="folder">📁</span><span class="nameText">${esc(x.name)}</span></button><div class="categoryNet ${x.net>=0?'positive':'negative'}"><span>Net</span><strong>${x.net>=0?'+':''}${money(x.net)}</strong></div><span class="categoryReportArrow" aria-hidden="true">›</span></div><div class="categoryMetrics"><div class="categoryMetric"><div class="metricLabel">Income</div><div class="metricValue green">${money(x.income)}</div></div><div class="categoryMetric"><div class="metricLabel">Expense</div><div class="metricValue red">${money(x.expense)}</div></div></div></div></div>`).join('')||'<div class="small">No income or expense data for this period.</div>';
+   $('reportCategories').innerHTML=rows.map(x=>{
+     const onlyIncome=x.income>0&&x.expense<=0;
+     const onlyExpense=x.expense>0&&x.income<=0;
+     const type=onlyIncome?'Income':onlyExpense?'Expense':'Income & Expense';
+     const amount=onlyIncome?x.income:onlyExpense?x.expense:x.net;
+     const cls=onlyExpense?'negative':'positive';
+     const amountText=onlyIncome||onlyExpense?money(amount):(amount>=0?'+':'')+money(amount);
+     return `<div class="categoryReportItem" data-category="${esc(x.name)}" role="button" tabindex="0" aria-label="Show ${esc(x.name)} transactions"><div class="categoryReportItemBody"><div class="categoryReportTop"><div class="categoryNameLink"><span class="folder">📁</span><span class="nameText">${esc(x.name)}</span></div><div class="categoryNet ${cls}"><span>${type}</span><strong>${amountText}</strong></div><span class="categoryReportArrow">›</span></div></div></div>`;
+   }).join('')||'<div class="small">No income or expense data for this period.</div>';
  }
  const reportBox=$('reportCategories');
- if(reportBox && !reportBox.dataset.boundV36){
-   reportBox.dataset.boundV36='1';
+ if(reportBox && !reportBox.dataset.boundV38){
+   reportBox.dataset.boundV38='1';
    reportBox.addEventListener('click',e=>{
-     const name=e.target.closest('.categoryNameLink');
-     if(name && reportBox.contains(name)){
-       e.preventDefault();e.stopPropagation();
-       showCategory(name.dataset.category,window.currentReportPeriod||period);
-       return;
-     }
      const card=e.target.closest('.categoryReportItem');
-     if(card && reportBox.contains(card))openCategoryReport(card.dataset.category,window.currentReportPeriod||period);
+     if(card && reportBox.contains(card))showCategory(card.dataset.category,window.currentReportPeriod||period);
    });
    reportBox.addEventListener('keydown',e=>{
-     const name=e.target.closest('.categoryNameLink');
-     if(name && (e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();showCategory(name.dataset.category,window.currentReportPeriod||period);return;}
+     if(e.key!=='Enter'&&e.key!==' ')return;
      const card=e.target.closest('.categoryReportItem');
-     if(card && (e.key==='Enter'||e.key===' ')){e.preventDefault();openCategoryReport(card.dataset.category,window.currentReportPeriod||period);}
+     if(card && reportBox.contains(card)){e.preventDefault();showCategory(card.dataset.category,window.currentReportPeriod||period);}
    });
  }
  window.currentReportPeriod=period;
