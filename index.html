@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<title>CashBook v38</title>
+<title>CashBook v39</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f4f6;--text:#111827;--mutedText:#6b7280;--card:#fff;--soft:#f9fafb;--soft2:#e5e7eb;--border:#e5e7eb;--input:#fff;--header:#111827;--footer:#fff;--blue:#2563eb;--modal:#fff}
@@ -249,6 +249,18 @@ main{padding-bottom:92px}
 @media(max-width:380px){#reportTab .categoryReportTop{grid-template-columns:minmax(0,1fr) auto 22px}#reportTab .categoryNameLink{font-size:16px}#reportTab .categoryNet strong{font-size:12px}#reportTab .categoryMetric{padding:9px 9px}#reportTab .categoryMetric .metricValue{font-size:12px}}
 </style>
 
+<style id="report-category-v39">
+#reportTab .categoryReportTop{grid-template-columns:minmax(0,1fr) auto}
+#reportTab .categoryReportArrow{display:none!important}
+#reportTab .categoryNameLink .categoryIcon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:23px;line-height:1;flex:0 0 auto}
+#reportTab .categoryNameLink .categoryIcon.wallet{background:#e7f7ea}
+#reportTab .categoryNameLink .categoryIcon.briefcase{background:#e8f1ff}
+#reportTab .categoryNameLink .categoryIcon.home{background:#ffe8e8}
+#reportTab .categoryNameLink .categoryIcon.food{background:#fff1dd}
+#reportTab .categoryNameLink .categoryIcon.shopping{background:#f0e6ff}
+#reportTab .categoryNameLink .categoryIcon.other{background:#eef1f5}
+@media(max-width:380px){#reportTab .categoryNameLink .categoryIcon{width:40px;height:40px;font-size:21px}}
+</style>
 <style id="report-category-v38">
 #reportTab .categoryReportList{display:grid;gap:10px}
 #reportTab .categoryReportItem{border:1px solid var(--border);border-radius:18px;background:var(--card);overflow:hidden;box-shadow:0 2px 9px rgba(0,0,0,.045);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -617,7 +629,14 @@ function renderSummaryReport(period){
      const amount=onlyIncome?x.income:onlyExpense?x.expense:x.net;
      const cls=onlyExpense?'negative':'positive';
      const amountText=onlyIncome||onlyExpense?money(amount):(amount>=0?'+':'')+money(amount);
-     return `<div class="categoryReportItem" data-category="${esc(x.name)}" role="button" tabindex="0" aria-label="Show ${esc(x.name)} transactions"><div class="categoryReportItemBody"><div class="categoryReportTop"><div class="categoryNameLink"><span class="folder">📁</span><span class="nameText">${esc(x.name)}</span></div><div class="categoryNet ${cls}"><span>${type}</span><strong>${amountText}</strong></div><span class="categoryReportArrow">›</span></div></div></div>`;
+     const n=x.name.toLowerCase();
+     let icon='💼', iconClass='other';
+     if(n.includes('salary')||n.includes('payroll')||n.includes('wage')){icon='💼';iconClass='briefcase';}
+     else if(n.includes('rent')||n.includes('house')||n.includes('home')){icon='🏠';iconClass='home';}
+     else if(n.includes('food')||n.includes('grocery')||n.includes('restaurant')||n.includes('dining')){icon='🍴';iconClass='food';}
+     else if(n.includes('shop')||n.includes('shopping')||n.includes('purchase')){icon='🛍️';iconClass='shopping';}
+     else if(n.includes('other')||n.includes('cash')||n.includes('wallet')||n.includes('income')){icon='👛';iconClass='wallet';}
+     return `<div class="categoryReportItem" data-category="${esc(x.name)}" role="button" tabindex="0" aria-label="Show ${esc(x.name)} transactions"><div class="categoryReportItemBody"><div class="categoryReportTop"><div class="categoryNameLink"><span class="categoryIcon ${iconClass}">${icon}</span><span class="nameText">${esc(x.name)}</span></div><div class="categoryNet ${cls}"><span>${type}</span><strong>${amountText}</strong></div></div></div></div>`;
    }).join('')||'<div class="small">No income or expense data for this period.</div>';
  }
  const reportBox=$('reportCategories');
