@@ -104,6 +104,10 @@ main{padding-bottom:92px}
 .accountMenu .deleteAccount{color:#b91c1c}
 </style>
 
+<style id="report-click-style">
+.reportCategoryRow .clickableAmount{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.reportCategoryRow .clickableAmount:active{opacity:.65}
+</style>
 <style id="category-row-style">
 .categoryRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee;cursor:pointer}
 .categoryRow:last-child{border-bottom:0}
@@ -455,10 +459,26 @@ function renderSummaryReport(period){
      return {name,income:inc,expense:exp,net:inc-exp};
    }).filter(x=>x.income>0||x.expense>0).sort((x,y)=>(y.income+y.expense)-(x.income+x.expense));
    if($('reportCategoryHead'))$('reportCategoryHead').classList.toggle('hidden',rows.length===0);
-   $('reportCategories').innerHTML=rows.map(x=>`<div class="reportCategoryRow"><div class="catName">📁 ${esc(x.name)}</div><div class="catNum green">${money(x.income)}</div><div class="catNum red">${money(x.expense)}</div><div class="catNum ${x.net>=0?'green':'red'}">${x.net>=0?'+':''}${money(x.net)}</div></div>`).join('')||'<div class="small">No income or expense data for this period.</div>';
+   $('reportCategories').innerHTML=rows.map(x=>`<div class="reportCategoryRow"><div class="catName">📁 ${esc(x.name)}</div><div class="catNum green clickableAmount" role="button" tabindex="0" data-report-category="${esc(x.name)}" data-report-type="income">${money(x.income)}</div><div class="catNum red clickableAmount" role="button" tabindex="0" data-report-category="${esc(x.name)}" data-report-type="expense">${money(x.expense)}</div><div class="catNum ${x.net>=0?'green':'red'}">${x.net>=0?'+':''}${money(x.net)}</div></div>`).join('')||'<div class="small">No income or expense data for this period.</div>';
+   document.querySelectorAll('.clickableAmount').forEach(el=>{
+     const open=()=>showCategoryType(el.dataset.reportCategory,el.dataset.reportType,period);
+     el.onclick=open;
+     el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};
+   });
  }
  renderExpenseDonut(a);
  renderMonthlyLine(a);
+}
+function showCategoryType(cat,type,period){
+ const r=reportRange(period);
+ let a=db.tx.filter(t=>t.type===type&&t.category===cat);
+ if(r)a=a.filter(t=>t.date>=r.start&&t.date<=r.end);
+ const total=a.reduce((s,t)=>s+Number(t.amount||0),0);
+ const label=type==='income'?'Income':'Expense';
+ $('detailTitle').textContent=`${cat} • ${label}`;
+ $('detailContent').innerHTML=`<div class="card" style="margin:0 0 8px;background:#f9fafb"><div class="label">${label} Total</div><div class="balance" style="font-size:25px">${money(total)}</div><div class="small">${a.length} transaction(s)</div></div>`+
+ (a.map(t=>{const sign=type==='income'?'+':'-';const cls=type==='income'?'green':'red';return `<div class="tx"><div class="row"><div style="min-width:0"><b>${esc(t.desc||cat)}</b><div class="small">${esc(displayDate(t.date))} • ${esc(account(t.account)?.name||'')} • ${label}</div></div><b class="${cls}">${sign}${money(t.amount)}</b></div></div>`}).join('')||'<div class="small">No transactions.</div>');
+ $('detailModal').classList.remove('hidden');$('detailModal').style.display='flex';document.body.style.overflow='hidden';
 }
 function showCategory(cat,period){
  const r=reportRange(period);
