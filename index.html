@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<title>CashBook v34</title>
+<title>CashBook v35</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f4f6;--text:#111827;--mutedText:#6b7280;--card:#fff;--soft:#f9fafb;--soft2:#e5e7eb;--border:#e5e7eb;--input:#fff;--header:#111827;--footer:#fff;--blue:#2563eb;--modal:#fff}
@@ -143,7 +143,7 @@ main{padding-bottom:92px}
 @media(max-width:560px){.reportTableHead,.reportCategoryRow{grid-template-columns:minmax(0,1fr) 78px 78px 78px;gap:5px}.reportCategoryRow .catNum{font-size:12px}.donutWrap{grid-template-columns:125px minmax(0,1fr);gap:12px}.donut{width:125px;height:125px}.donut:after{width:72px;height:72px}.lineChart{height:200px}}
 </style>
 <style id="report-layout-v34">
-/* v34: mobile-safe report layout; built from v24 */
+/* v35: mobile-safe report layout; built from v24 */
 #reportTab .reportTableHead,
 #reportTab .reportCategoryRow{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(70px,.9fr) minmax(70px,.9fr) minmax(70px,.9fr);gap:6px;align-items:center;width:100%;}
 #reportTab .reportTableHead{padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;font-weight:800;}
@@ -170,6 +170,23 @@ main{padding-bottom:92px}
  #reportTab .donut{width:112px;height:112px}
  #reportTab .donut:after{width:65px;height:65px}
 }
+</style>
+<style id="report-layout-v35">
+/* v35: cleaner report trend chart + category-name navigation */
+#reportTab .reportCategoryRow .catName{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+#reportTab .reportCategoryRow .catName:active{opacity:.55}
+#reportTab .reportCategoryRow .catNum{cursor:default;text-decoration:none}
+#reportTab .trendCard{overflow:hidden}
+#reportTab .trendHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+#reportTab .trendLegend{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;font-size:12px;font-weight:700;color:var(--mutedText)}
+#reportTab .trendLegend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+#reportTab .trendLegend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+#reportTab .trendCanvas{width:100%;overflow:hidden;border:1px solid var(--border);border-radius:14px;background:var(--bg)}
+#reportTab .lineChart{height:230px;margin:0}
+#reportTab .lineGrid{stroke-width:1}
+#reportTab .linePathIncome,#reportTab .linePathExpense{stroke-width:3.5}
+#reportTab .lineDotIncome,#reportTab .lineDotExpense{r:5}
+@media(max-width:560px){#reportTab .trendHeader{display:block}#reportTab .trendLegend{justify-content:flex-start;margin-top:6px}#reportTab .lineChart{height:210px}}
 </style>
 </head>
 <body>
@@ -225,9 +242,7 @@ main{padding-bottom:92px}
         <div class="chartSub">Expense share by category for the selected period.</div>
         <div id="expenseDonutWrap" class="donutWrap"></div>
       </div>
-      <div class="card chartBox">
-        <div class="chartTitle">Monthly Income &amp; Expense</div>
-        <div class="chartSub">Monthly totals for the selected period.</div>
+      <div class="card chartBox trendCard">
         <div id="monthlyLineWrap"></div>
       </div>
     </div>
@@ -448,18 +463,20 @@ function renderMonthlyLine(a){
  a.forEach(t=>{if(t.type==='transfer'||!t.date)return;const key=t.date.slice(0,7);if(!map[key])map[key]={income:0,expense:0};if(t.type==='income')map[key].income+=Number(t.amount||0);if(t.type==='expense')map[key].expense+=Number(t.amount||0);});
  const keys=Object.keys(map).sort();
  if(!keys.length){wrap.innerHTML='<div class="small">No income or expense data for this period.</div>';return;}
- const width=720,height=220,left=48,right=12,top=16,bottom=38;
+ const width=760,height=230,left=54,right=16,top=18,bottom=42;
  const plotW=width-left-right,plotH=height-top-bottom;
  const max=Math.max(...keys.map(k=>Math.max(map[k].income,map[k].expense)),1);
  const x=i=>keys.length===1?left+plotW/2:left+(i/(keys.length-1))*plotW;
  const y=v=>top+plotH-(v/max)*plotH;
  const path=(field)=>keys.map((k,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(map[k][field]).toFixed(1)}`).join(' ');
- const grid=[0,.25,.5,.75,1].map(v=>{const yy=y(max*v);return `<line class="lineGrid" x1="${left}" x2="${width-right}" y1="${yy}" y2="${yy}"/><text class="lineAxis" x="${left-7}" y="${yy+3}" text-anchor="end">${money(max*v).replace('AED ','')}</text>`}).join('');
- const labels=keys.map((k,i)=>`<text class="lineAxis" x="${x(i)}" y="${height-14}" text-anchor="middle">${esc(monthLabel(k))}</text>`).join('');
- const incomeDots=keys.map((k,i)=>`<circle class="lineDotIncome" cx="${x(i)}" cy="${y(map[k].income)}" r="4" fill="#16a34a"><title>${esc(monthLabel(k))} Income: ${money(map[k].income)}</title></circle>`).join('');
- const expenseDots=keys.map((k,i)=>`<circle class="lineDotExpense" cx="${x(i)}" cy="${y(map[k].expense)}" r="4" fill="#dc2626"><title>${esc(monthLabel(k))} Expense: ${money(map[k].expense)}</title></circle>`).join('');
- wrap.innerHTML=`<svg class="lineChart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Monthly income and expense line chart">${grid}<path class="linePathIncome" stroke="#16a34a" d="${path('income')}"/><path class="linePathExpense" stroke="#dc2626" d="${path('expense')}"/>${incomeDots}${expenseDots}${labels}</svg><div class="lineLegend"><span><i style="background:#16a34a"></i>Income</span><span><i style="background:#dc2626"></i>Expense</span></div>`;
+ const area=(field)=>`${path(field)} L ${x(keys.length-1).toFixed(1)} ${(top+plotH).toFixed(1)} L ${x(0).toFixed(1)} ${(top+plotH).toFixed(1)} Z`;
+ const grid=[0,.25,.5,.75,1].map(v=>{const yy=y(max*v);return `<line class="lineGrid" x1="${left}" x2="${width-right}" y1="${yy}" y2="${yy}"/><text class="lineAxis" x="${left-8}" y="${yy+3}" text-anchor="end">${money(max*v).replace('AED ','')}</text>`}).join('');
+ const labels=keys.map((k,i)=>`<text class="lineAxis" x="${x(i)}" y="${height-13}" text-anchor="middle">${esc(monthLabel(k))}</text>`).join('');
+ const incomeDots=keys.map((k,i)=>`<circle class="lineDotIncome" cx="${x(i)}" cy="${y(map[k].income)}" r="5" fill="#16a34a"><title>${esc(monthLabel(k))} Income: ${money(map[k].income)}</title></circle>`).join('');
+ const expenseDots=keys.map((k,i)=>`<circle class="lineDotExpense" cx="${x(i)}" cy="${y(map[k].expense)}" r="5" fill="#dc2626"><title>${esc(monthLabel(k))} Expense: ${money(map[k].expense)}</title></circle>`).join('');
+ wrap.innerHTML=`<div class="trendHeader"><div><div class="chartTitle">Monthly Income &amp; Expense</div><div class="chartSub">Track your monthly cash flow for the selected period.</div></div><div class="trendLegend"><span><i style="background:#16a34a"></i>Income</span><span><i style="background:#dc2626"></i>Expense</span></div></div><div class="trendCanvas"><svg class="lineChart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Monthly income and expense line chart">${grid}<path d="${area('income')}" fill="#16a34a" fill-opacity=".08"></path><path d="${area('expense')}" fill="#dc2626" fill-opacity=".08"></path><path class="linePathIncome" stroke="#16a34a" d="${path('income')}"></path><path class="linePathExpense" stroke="#dc2626" d="${path('expense')}"></path>${incomeDots}${expenseDots}${labels}</svg></div>`;
 }
+
 function renderSummaryReport(period){
  const a=reportTransactions(period);
  const income=a.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount||0),0);
@@ -475,21 +492,21 @@ function renderSummaryReport(period){
      return {name,income:inc,expense:exp,net:inc-exp};
    }).filter(x=>x.income>0||x.expense>0).sort((x,y)=>(y.income+y.expense)-(x.income+x.expense));
    if($('reportCategoryHead'))$('reportCategoryHead').classList.toggle('hidden',rows.length===0);
-   $('reportCategories').innerHTML=rows.map(x=>`<div class="reportCategoryRow"><div class="catName">📁 ${esc(x.name)}</div><div class="catNum green reportAmountLink" role="button" tabindex="0" data-category="${esc(x.name)}" data-type="income">${money(x.income)}</div><div class="catNum red reportAmountLink" role="button" tabindex="0" data-category="${esc(x.name)}" data-type="expense">${money(x.expense)}</div><div class="catNum ${x.net>=0?'green':'red'}">${x.net>=0?'+':''}${money(x.net)}</div></div>`).join('')||'<div class="small">No income or expense data for this period.</div>';
+   $('reportCategories').innerHTML=rows.map(x=>`<div class="reportCategoryRow"><div class="catName reportCategoryNameLink" role="button" tabindex="0" data-category="${esc(x.name)}">📁 ${esc(x.name)}</div><div class="catNum green">${money(x.income)}</div><div class="catNum red">${money(x.expense)}</div><div class="catNum ${x.net>=0?'green':'red'}">${x.net>=0?'+':''}${money(x.net)}</div></div>`).join('')||'<div class="small">No income or expense data for this period.</div>';
  }
  const reportBox=$('reportCategories');
- if(reportBox && !reportBox.dataset.amountBound){
-   reportBox.dataset.amountBound='1';
-   const openReportAmount=(target)=>{
-     const el=target.closest('.reportAmountLink');
+ if(reportBox && !reportBox.dataset.nameBound){
+   reportBox.dataset.nameBound='1';
+   const openCategoryName=(target)=>{
+     const el=target.closest('.reportCategoryNameLink');
      if(!el || !reportBox.contains(el))return;
-     showCategoryType(el.dataset.category,el.dataset.type,window.currentReportPeriod||period);
+     showCategory(el.dataset.category,window.currentReportPeriod||period);
    };
-   reportBox.addEventListener('click',e=>openReportAmount(e.target));
-   reportBox.addEventListener('pointerup',e=>{if(e.pointerType==='touch')openReportAmount(e.target);});
+   reportBox.addEventListener('click',e=>openCategoryName(e.target));
+   reportBox.addEventListener('pointerup',e=>{if(e.pointerType==='touch')openCategoryName(e.target);});
    reportBox.addEventListener('keydown',e=>{
-     const el=e.target.closest('.reportAmountLink');
-     if(el && (e.key==='Enter'||e.key===' ')){e.preventDefault();showCategoryType(el.dataset.category,el.dataset.type,window.currentReportPeriod||period);}
+     const el=e.target.closest('.reportCategoryNameLink');
+     if(el && (e.key==='Enter'||e.key===' ')){e.preventDefault();showCategory(el.dataset.category,window.currentReportPeriod||period);}
    });
  }
  window.currentReportPeriod=period;
